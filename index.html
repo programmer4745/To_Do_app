@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vibrant Todo App</title>
+    <style>
+        /* Light Mode Colors */
+        body {
+            font-family: 'Courier New', monospace;
+            background: linear-gradient(135deg, #f7f7f7, #e1e1e1); /* Soft light gradient */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            color: #333; /* Dark text for light mode */
+            transition: background-color 0.3s ease;
+        }
+
+        .container {
+            background-color: #ffffff; /* White background */
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 450px;
+            transition: background-color 0.3s ease;
+        }
+
+        h1 {
+            color: #ff5722; /* Warm orange for the title */
+            text-align: center;
+            margin-bottom: 1.5rem;
+        }
+
+        input, button {
+            width: 100%;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border-radius: 6px;
+            font-size: 1rem;
+            box-sizing: border-box;
+            border: 1px solid #ddd;
+            transition: border-color 0.3s, background-color 0.3s;
+        }
+
+        input {
+            background-color: #f4f4f4;
+            color: #333;
+        }
+
+        button {
+            background-color: #2196F3; /* Soft blue for light mode */
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #1976D2; /* Darker blue when hovered */
+        }
+
+        #todo_display {
+            margin-top: 2rem;
+        }
+
+        .todo-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem;
+            border-bottom: 1px solid #ddd;
+            transition: background-color 0.3s ease;
+        }
+
+        .todo-item:last-child {
+            border-bottom: none;
+        }
+
+        .todo-item button {
+            background-color: #FF5722; /* Soft red for remove button */
+            color: white;
+            border: none;
+            padding: 0.5rem;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: background-color 0.3s;
+        }
+
+        .todo-item button:hover {
+            background-color: #d45f1f; /* Darker red on hover */
+        }
+
+        .completed {
+            text-decoration: line-through;
+            color: #888;
+        }
+
+        /* Dark Mode Colors */
+        body.dark-mode {
+            background: linear-gradient(135deg, #0a0a0a, #1e1e1e);
+        }
+
+        body.dark-mode .container {
+            background-color: #121212;
+        }
+
+        body.dark-mode h1 {
+            color: #00E676; /* Neon Green */
+        }
+
+        body.dark-mode input, body.dark-mode button {
+            background-color: #2c2c2c;
+            color: white;
+            border: 1px solid #555;
+        }
+
+        body.dark-mode input:focus, body.dark-mode button:focus {
+            border-color: #ff4081; /* Neon pink focus color */
+        }
+
+        body.dark-mode .todo-item {
+            background-color: #1d1d1d;
+            border-color: #444;
+        }
+
+        body.dark-mode .todo-item button {
+            background-color: #ff4081; /* Neon pink for remove button */
+        }
+
+        body.dark-mode .todo-item button:hover {
+            background-color: #e60073; /* Darker pink on hover */
+        }
+
+        /* Smooth Transition Effect for Mode Switch */
+        body, .container, button {
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Vibrant Todo App</h1>
+        <input type="text" id="todo_title" placeholder="Enter todo title" required>
+        <input type="text" id="todo_desc" placeholder="Enter todo description" required>
+        <button onclick="performOperation()">Add Todo</button>
+        <button id="toggleDarkMode" onclick="toggleDarkMode()">Toggle Dark Mode</button>
+        <button id="clearAll" onclick="clearAllTodos()">Clear All Todos</button>
+        <div id="todo_display"></div>
+    </div>
+
+    <script>
+        const titleinput = document.getElementById("todo_title");
+        const desinput = document.getElementById("todo_desc");
+        const todo_display = document.getElementById("todo_display");
+        const toggleDarkModeBtn = document.getElementById("toggleDarkMode");
+        const clearAllBtn = document.getElementById("clearAll");
+        
+        // Load todos from localStorage
+        let todos = JSON.parse(localStorage.getItem('todos')) || [];
+
+        // Function to add a new todo
+        function performOperation() {
+            const title = sanitizeInput(titleinput.value);
+            const desc = sanitizeInput(desinput.value);
+
+            if (title && desc) {
+                const newToDo = {
+                    title: title,
+                    desc: desc,
+                    completion: false
+                };
+                todos.push(newToDo);
+                localStorage.setItem('todos', JSON.stringify(todos));
+                updateTododisplay();
+
+                // Clear the input fields after adding the todo
+                titleinput.value = "";
+                desinput.value = "";
+            } else {
+                alert("Please enter both title and description!");
+            }
+        }
+
+        // Function to update the displayed todo list
+        function updateTododisplay() {
+            todo_display.innerHTML = ""; // Clear the display area
+
+            todos.forEach(function(elements, index) {
+                const todo = document.createElement("div");
+                todo.className = "todo-item";
+                todo.innerHTML = `
+                    <span class="${elements.completion ? 'completed' : ''}">
+                        ${elements.title}: ${elements.desc}
+                    </span>
+                    <button onclick="toggle(${index})">
+                        ${elements.completion ? 'Completed' : 'Incomplete'}
+                    </button>
+                `;
+                todo_display.appendChild(todo);
+            });
+        }
+
+        // Function to toggle the completion status of a todo
+        function toggle(index) {
+            todos[index].completion = !todos[index].completion;
+            localStorage.setItem('todos', JSON.stringify(todos));
+            updateTododisplay();
+        }
+
+        // Function to sanitize input to prevent XSS attacks
+        function sanitizeInput(input) {
+            const element = document.createElement('div');
+            if (input) {
+                element.innerText = input;
+                return element.innerHTML;
+            }
+            return "";
+        }
+
+        // Function to toggle dark mode
+        function toggleDarkMode() {
+            document.body.classList.toggle('dark-mode');
+        }
+
+        // Function to clear all todos
+        function clearAllTodos() {
+            if (confirm("Are you sure you want to clear all todos?")) {
+                todos = [];
+                localStorage.setItem('todos', JSON.stringify(todos));
+                updateTododisplay();
+            }
+        }
+
+        // Initialize by loading todos
+        updateTododisplay();
+    </script>
+</body>
+</html>
